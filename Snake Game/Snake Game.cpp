@@ -133,13 +133,16 @@ public:
         if (tail.size() == 0) {
             return;
         }
-        ChangeColor(tail[TailLength - 1].x, tail[TailLength - 1].y, sf::Color::White);
+        ChangeColor(tail[0].x, tail[0].y, sf::Color::White);
         std::cout << tail.size() << std::endl;
-        tail.pop_back();
         tail.push_back(OldPos);
+        tail.erase(tail.begin());
+        //tail.pop_back();
         std::cout << tail.size() << std::endl;
         for (size_t i = 0; i < tail.size(); i++)
         {
+           //std::cout << tail[i].x << tail[i].y << std::endl;
+           ChangeColor(tail[i].x, tail[i].y, sf::Color::White);
            ChangeColor(tail[i].x, tail[i].y, sf::Color::Red);
         }
         
