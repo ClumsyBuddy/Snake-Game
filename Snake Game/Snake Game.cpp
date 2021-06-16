@@ -1,5 +1,7 @@
 #include <SFML/Graphics.hpp>
 #include <iostream>
+#include <random>
+#include <time.h>
 
 struct Vec2 {
     int x, y;
@@ -41,6 +43,17 @@ public:
     }
 
 
+    void ResetBoard() {
+        for (int i = 0; i < data.N; i++) {
+            for (int j = 0; j < data.M; j++) {
+                _rect[i][j].setFillColor(sf::Color::White);
+                if (i == data.N - 1 || i == 0 || j == data.M - 1 || j == 0) {
+                    _rect[i][j].setFillColor(sf::Color::Black);
+                }
+            }
+        }
+    }
+
 
     sf::RectangleShape** _rect;
 private:
@@ -67,14 +80,42 @@ private:
 
 };
 
+struct Apple {
+public:
+    void InitApple(int x, int y) {
+        ApplePos.x = rand() % x - 1 + 1;
+        ApplePos.y = rand() % y - 1 + 1;
+    }
+
+    void EatApple(int x, int y) {
+        //ChangeColor(ApplePos.x, ApplePos.y, sf::Color::White);
+        ApplePos.x = rand() % x - 1 + 1;
+        ApplePos.y = rand() % y - 1 + 1;
+        //ChangeColor(ApplePos.x, ApplePos.y, sf::Color::Green);
+    }
+
+    Vec2 ApplePosition() {
+        return ApplePos;
+    }
+
+private:
+    //Data data;
+    Vec2 ApplePos;
+
+};
+
+
+
+
+
 class Player : private MyRects {
 public:
     Player(Data _data) : MyRects(_data), data(_data){
         InitPlayer();
+        apple.InitApple(data.N, data.M);
+        ChangeColor(apple.ApplePosition().x, apple.ApplePosition().y, sf::Color::Green);
     }
-    ~Player() {
-
-    }
+    ~Player() {}
 
     void InitPlayer() {
         PlayerPos.x = data.N / 2;
@@ -87,9 +128,27 @@ public:
         CurrentDirection = dir;
     }
 
+    void UpdateApple() {
+        if (PlayerPos.x == apple.ApplePosition().x && PlayerPos.y == apple.ApplePosition().y) {
+            IncreaseSnakeSize();
+            ChangeColor(apple.ApplePosition().x, apple.ApplePosition().y, sf::Color::White);
+            apple.EatApple(data.N, data.M);
+            ChangeColor(apple.ApplePosition().x, apple.ApplePosition().y, sf::Color::Green);
+        }
+        ChangeColor(apple.ApplePosition().x, apple.ApplePosition().y, sf::Color::Green);
+    }
+
     void Update(){
-        if (PlayerPos.x == data.N || PlayerPos.x == 0 || PlayerPos.y == data.M || PlayerPos.y == 0)
+        if (PlayerPos.x == data.N || PlayerPos.x == 0 || PlayerPos.y == data.M || PlayerPos.y == 0) {
+            Reset();
             return;
+        }
+        if (DeathCheck()) {
+            Reset();
+            return;
+        }
+
+
         sf::Time elapsed = clock.getElapsedTime();
 
         if (elapsed.asMilliseconds() < UpdateSpeed)
@@ -129,19 +188,42 @@ public:
         Down = 4
     };
 
+    bool DeathCheck() {
+        for (size_t i = 0; i < tail.size(); i++)
+        {
+            if (PlayerPos.x == tail[i].x && PlayerPos.y == tail[i].y) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    void Reset() {
+        ChangeColor(PlayerPos.x, PlayerPos.y, sf::Color::White);
+        PlayerPos.x = data.N / 2;
+        PlayerPos.y = data.M / 2;
+        ChangeColor(PlayerPos.x, PlayerPos.y, sf::Color::Red);
+        if (tail.size() > 0) {
+            for (size_t j = 0; j < tail.size() - 1; j++) {
+                ChangeColor(tail[j].x, tail[j].y, sf::Color::White);
+            }
+            TailLength = 0;
+            tail.erase(tail.begin(), tail.end());
+        }
+        ResetBoard();
+        
+    }
+
+
     void UpdateTail() {
         if (tail.size() == 0) {
             return;
         }
         ChangeColor(tail[0].x, tail[0].y, sf::Color::White);
-        std::cout << tail.size() << std::endl;
         tail.push_back(OldPos);
         tail.erase(tail.begin());
-        //tail.pop_back();
-        std::cout << tail.size() << std::endl;
         for (size_t i = 0; i < tail.size(); i++)
         {
-           //std::cout << tail[i].x << tail[i].y << std::endl;
            ChangeColor(tail[i].x, tail[i].y, sf::Color::White);
            ChangeColor(tail[i].x, tail[i].y, sf::Color::Red);
         }
@@ -158,12 +240,13 @@ public:
     }
 
 
-    void Draw() { DrawRect(); }
+    void Draw() { DrawRect();}
 
    
 
 private:
     Data data;
+    Apple apple;
     Vec2 PlayerPos;
     Vec2 OldPos;
     int CurrentDirection;
@@ -176,8 +259,12 @@ private:
 
 int main()
 {
+    srand(time(NULL));
+
     Data data;
     Player p(data);
+   
+
 
     data.window->setFramerateLimit(60);
 
@@ -212,6 +299,7 @@ int main()
         p.Draw();
         data.window->display();
         p.Update();
+        p.UpdateApple();
     }
 
    
