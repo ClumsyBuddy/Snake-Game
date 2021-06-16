@@ -83,15 +83,13 @@ private:
 struct Apple {
 public:
     void InitApple(int x, int y) {
-        ApplePos.x = rand() % x - 1 + 1;
-        ApplePos.y = rand() % y - 1 + 1;
+        ApplePos.x = rand() % (x - 2) + 2;
+        ApplePos.y = rand() % (y - 2) + 2;
     }
 
-    void EatApple(int x, int y) {
-        //ChangeColor(ApplePos.x, ApplePos.y, sf::Color::White);
-        ApplePos.x = rand() % x - 1 + 1;
-        ApplePos.y = rand() % y - 1 + 1;
-        //ChangeColor(ApplePos.x, ApplePos.y, sf::Color::Green);
+    void EatApple(int x, int y) {       
+        ApplePos.x = rand() % (x - 2) + 2;
+        ApplePos.y = rand() % (y - 2) + 2;
     }
 
     Vec2 ApplePosition() {
@@ -99,7 +97,6 @@ public:
     }
 
 private:
-    //Data data;
     Vec2 ApplePos;
 
 };
@@ -139,7 +136,7 @@ public:
     }
 
     void Update(){
-        if (PlayerPos.x == data.N || PlayerPos.x == 0 || PlayerPos.y == data.M || PlayerPos.y == 0) {
+        if (PlayerPos.x == data.N - 1 || PlayerPos.x == 0 + 1 || PlayerPos.y == data.M - 1 || PlayerPos.y == 0 + 1) {
             Reset();
             return;
         }
@@ -257,14 +254,38 @@ private:
 };
 
 
+struct UI
+{
+    bool LoadFont(std::string Path) {
+        
+    }
+    void SetText(int width, int height){
+        
+    }
+
+   
+};
+
+
 int main()
 {
     srand(time(NULL));
 
     Data data;
     Player p(data);
-   
+    bool Pause = false;
 
+    sf::Font font;
+    
+    if (!font.loadFromFile("arial.ttf")) {
+        std::cout << "Couldn't Find Font" << std::endl;
+        data.window->close();
+    }
+    sf::Text TextPause("Game Paused", font);
+    TextPause.setPosition(sf::Vector2f(data.Width / 2 - 150, data.Height / 2 - 50));
+    TextPause.setCharacterSize(50);
+    TextPause.setStyle(sf::Text::Bold);
+    TextPause.setFillColor(sf::Color::Black);
 
     data.window->setFramerateLimit(60);
 
@@ -289,6 +310,8 @@ int main()
                     p.MovePlayer(p.Right);
                 if (event.key.code == sf::Keyboard::Space)
                     p.IncreaseSnakeSize();
+                if (event.key.code == sf::Keyboard::Escape)
+                    Pause = !Pause;
                 break;
             default:
                 break;
@@ -297,9 +320,15 @@ int main()
         
         data.window->clear();
         p.Draw();
+        if (Pause == true) {
+            data.window->draw(TextPause);
+        }
         data.window->display();
-        p.Update();
-        p.UpdateApple();
+        if (Pause == false) {
+            p.Update();
+            p.UpdateApple();
+        }
+        
     }
 
    
